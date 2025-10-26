@@ -3,12 +3,15 @@ import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { HttpService } from '@nestjs/axios';
 import { AccountApiResponse } from './dto/account.dto';
+import { KafkaService } from "src/kafka/kafka.service";
 
 @Injectable()
 export class TransactionService {
   constructor(
     private readonly prismaService: PrismaService, 
-    private readonly httpService: HttpService) {}
+    private readonly httpService: HttpService,
+    private readonly kafkaService: KafkaService
+  ) {}
 
   async create(createTransactionDto: CreateTransactionDto) {
 
@@ -25,6 +28,11 @@ export class TransactionService {
     }
 
     if (account.status == 'new' || account.status == 'active') {
+      await this.kafkaService.send({
+        accountId,
+        description,
+        status: 'CREATED',
+      });
       return this.prismaService.transaction.create({
         data: { accountId, description, status: 'CREATED' },
       });
@@ -43,5 +51,23 @@ export class TransactionService {
     return this.prismaService.transaction.findUnique({
       where: { id },
     });
+  }
+
+  async fraud(id: number) {
+    const transaction = await this.findOne(id);
+    
+    if (!transaction) {
+      throw new Error("Transaction not found");
+    }
+
+    if (transaction.status !== "FRAUD" && transaction.status !== "FAILED") {
+      const newTransaction =  await this.prismaService.transaction.update({
+        where: { id },
+        data: { status: "FRAUD" },
+      });
+
+      await this.kafkaService.send(newTransaction, null);
+      return newTransaction;
+    } else throw new Error("Transaction is not in a valid status");
   }
 }

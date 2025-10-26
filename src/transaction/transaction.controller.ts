@@ -20,4 +20,9 @@ export class TransactionController {
   findOne(@Param('id') id: string) {
     return this.transactionService.findOne(+id);
   }
+
+  @Post(':id')
+  fraud(@Param('id') id: string) {
+    return this.transactionService.fraud(+id);
+  }
 }
