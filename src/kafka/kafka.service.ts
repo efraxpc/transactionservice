@@ -9,10 +9,14 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
 
   constructor(private readonly configService: ConfigService) {
     const clientId = this.configService.get<string>('KAFKA_CLIENT_ID');
-    const brokers = this.configService.get<string>('KAFKA_BROKERS').split(',');
-    this.topic = this.configService.get<string>('KAFKA_TOPIC');
+    const brokers = this.configService.get<string>('KAFKA_BROKERS')?.split(',');
+    const topic = this.configService.get<string>('KAFKA_TOPIC');
+    if (!topic) {
+      throw new Error('KAFKA_TOPIC is not configured');
+    }
+    this.topic = topic;
 
-    const kafka = new Kafka({ clientId, brokers });
+    const kafka = new Kafka({ clientId, brokers: brokers || [] });
     this.producer = kafka.producer({ retry: { retries: 3 } });
   }
 
@@ -24,9 +28,8 @@ export class KafkaService implements OnModuleInit, OnModuleDestroy {
     await this.producer.disconnect();
   }
 
-  async send(value: any, key?: string): Promise<void> {
+  async send(value: any, key?: string | null): Promise<void> {
     const messages = [{ key, value: JSON.stringify(value) }];
-        await this.producer.send({ topic: this.topic, messages
-    });
+    await this.producer.send({ topic: this.topic, messages });
   }
 }
