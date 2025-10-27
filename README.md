@@ -1,98 +1,144 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 💳 Transaction Microservice (`transaction-microservice`)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+This microservice is built using **NestJS** and **Prisma ORM** to manage and process financial transaction records. It demonstrates a **hybrid communication** architecture, handling both synchronous API requests and asynchronous event processing using Kafka.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## ✨ Key Features
 
-## Description
+  * **RESTful CRUD:** Manages core transaction records (Create, Read, Fraud Flagging).
+  * **Asynchronous Processing:** Acts as a **Kafka Producer** for fraud events and status changes.
+  * **Synchronous Communication:** Uses **Axios** to communicate synchronously with the Account Microservice to validate user status before creating a transaction.
+  * **Database:** Utilizes **PostgreSQL** for persistence via **Prisma ORM**.
+  * **Technology Stack:** Built on **NestJS** and **TypeScript** for modularity and type safety.
+  * **API Documentation:** Integrated with **Swagger UI** for easy endpoint testing and documentation.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+-----
 
-## Project setup
+## 🛠️ System Requirements
 
-```bash
-$ npm install
-```
+To run this project, you need the following installed:
 
-## Compile and run the project
+1.  **Node.js** (v18 or higher)
+2.  **npm** (Node Package Manager)
+3.  **Docker & Docker Compose** (to run PostgreSQL, Kafka, and Kafka UI)
+4.  **Postman** (for testing API endpoints)
+
+-----
+
+## ⚙️ Configuration and Local Execution
+
+### Step 1: Clone the Repository & Install Dependencies
 
 ```bash
-# development
-$ npm run start
+# Clone the repository
+git clone [Your Repository URL] transaction-microservice
+cd transaction-microservice
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+# Install Node.js packages
+npm install
 ```
 
-## Run tests
+### Step 2: Configure Environment Variables
+
+Create a file named **`.env`** in the project root with the following variables. These are used by both Node.js (`@nestjs/config`) and Docker Compose.
+
+```env
+# SERVER CONFIGURATION
+PORT=3000
+
+# POSTGRESQL (Used by Prisma and Docker)
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=tservice_db
+POSTGRES_PORT=5438
+
+# KAFKA CONFIGURATION
+KAFKA_CLIENT_ID=transaction-service
+KAFKA_BROKERS=localhost:29092
+KAFKA_TOPIC=transaction-service-topic
+```
+
+### Step 3: Start the Infrastructure (Database & Kafka)
+
+Use Docker Compose to launch PostgreSQL, Kafka, and the Kafka UI interface.
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+docker compose up -d
 ```
 
-## Deployment
+*(Verify services are running: `docker ps`)*
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Step 4: Run Prisma Migrations
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Apply the database schema (models) to PostgreSQL and generate the Prisma Client.
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Apply schema and generate client
+npx prisma migrate dev --name init
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Step 5: Start the Microservice
 
-## Resources
+```bash
+# Start the NestJS server with hot reload
+npm run start:dev
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+The service will start on port `3000`.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+-----
 
-## Support
+## 🌐 API Endpoints
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Access the interactive API documentation at: **`http://localhost:3000/api`**
 
-## Stay in touch
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| **POST** | `/transaction` | Creates a new transaction. Calls Account Service for status validation. Produces Kafka event if validated. |
+| **GET** | `/transaction` | Retrieves all transactions. |
+| **GET** | `/transaction/:id` | Retrieves a transaction by its unique ID. |
+| **POST** | `/transaction/:id/fraud` | Flags a transaction as `FRAUD` and publishes a message to Kafka for the Account Service to consume (e.g., to block the user). |
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Sample Payload (POST /transaction)
 
-## License
+```json
+{
+  "accountId": "662c081370bd2ba6b5f04e94",
+  "description": "Purchase of goods online"
+}
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+-----
+
+## 🔄 Inter-Service Communication
+
+This microservice interacts with external services in the following ways:
+
+| Service | Protocol | Role | Usage |
+| :--- | :--- | :--- | :--- |
+| **Account Service** | **HTTP (Synchronous)** | Client | Called before transaction creation to validate if the `accountId` exists and is in a valid status (`new` or `active`). |
+| **Kafka Broker** | **Asynchronous** | Producer | Publishes messages to the `transaction-service-topic` when a transaction status is updated (e.g., set to `FRAUD`). |
+
+-----
+
+## 💻 Project Structure
+
+```
+.
+├── prisma/               # Prisma schema and migrations
+├── src/
+│   ├── common/           # Shared utilities (e.g., DTOs)
+│   ├── config/           # Environment loading and validation
+│   ├── prisma/           # Prisma service and module wrapper
+│   ├── transaction/      # Core logic (Controller, Service, Module, DTOs)
+│   ├── main.ts           # Application entry point & Swagger setup
+│   └── app.module.ts     # Main NestJS module
+├── .env                  # Environment variables
+├── docker-compose.yml    # Infrastructure services (PostgreSQL, Kafka, UI)
+└── package.json
+```
+
+-----
+
+## 🧑‍💻 Contributions
+
+Feel free to open issues or submit pull requests for bug fixes, new features, or improvements\!
